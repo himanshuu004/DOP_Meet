@@ -18,6 +18,6 @@ deploy_run('php artisan route:clear');
 deploy_run('php artisan config:cache');
 deploy_run('php artisan route:cache');
 
-echo '<pre>[INFO] Deploy complete. If you changed PHP code, upload files to dop_meet/ via FTP before running this script.</pre>';
+echo '<pre>[INFO] Deploy complete. Code synced from GitHub, caches rebuilt.</pre>';
 
 deploy_finish();

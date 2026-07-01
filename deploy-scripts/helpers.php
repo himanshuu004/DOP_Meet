@@ -90,12 +90,157 @@ function deploy_run(string $command, bool $optional = false): void
 function deploy_git_pull(string $branch = 'main'): void
 {
     if (! is_dir(deploy_base_path().'/.git')) {
-        echo '<pre>[SKIP] No .git folder — upload changed files via FTP/File Manager instead of git pull.</pre>';
+        deploy_sync_from_github(branch: $branch);
 
         return;
     }
 
     deploy_run('git pull origin '.$branch, optional: true);
+}
+
+function deploy_sync_from_github(string $repo = 'himanshuu004/DOP_Meet', string $branch = 'main'): void
+{
+    echo '<pre>[SYNC] Pulling latest code from GitHub ('.$repo.' @ '.$branch.')...</pre>';
+
+    if (! class_exists(ZipArchive::class)) {
+        echo '<pre><span class="err">[FAIL] ZipArchive PHP extension is required for GitHub sync.</span></pre>';
+
+        return;
+    }
+
+    $base = deploy_base_path();
+    $tmpDir = $base.'/storage/app/deploy-tmp';
+    $zipPath = $tmpDir.'/repo.zip';
+
+    if (is_dir($tmpDir)) {
+        deploy_delete_directory($tmpDir);
+    }
+    mkdir($tmpDir, 0755, true);
+
+    $zipUrl = 'https://github.com/'.$repo.'/archive/refs/heads/'.$branch.'.zip';
+    $zipData = @file_get_contents($zipUrl);
+
+    if ($zipData === false) {
+        echo '<pre><span class="err">[FAIL] Could not download '.$zipUrl.'</span></pre>';
+
+        return;
+    }
+
+    file_put_contents($zipPath, $zipData);
+
+    $zip = new ZipArchive;
+    if ($zip->open($zipPath) !== true) {
+        echo '<pre><span class="err">[FAIL] Could not open downloaded zip.</span></pre>';
+
+        return;
+    }
+
+    $zip->extractTo($tmpDir);
+    $zip->close();
+    unlink($zipPath);
+
+    $extractedDirs = glob($tmpDir.'/*', GLOB_ONLYDIR);
+    if ($extractedDirs === false || $extractedDirs === []) {
+        echo '<pre><span class="err">[FAIL] Unexpected zip layout.</span></pre>';
+
+        return;
+    }
+
+    $source = $extractedDirs[0];
+    $skip = ['.env', '.git', 'vendor', 'node_modules', 'storage'];
+    $copied = 0;
+
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($source, FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::SELF_FIRST
+    );
+
+    foreach ($iterator as $item) {
+        $relative = substr($item->getPathname(), strlen($source) + 1);
+        $top = explode('/', $relative)[0];
+
+        if ($relative === '' || in_array($top, $skip, true)) {
+            continue;
+        }
+
+        $target = $base.'/'.$relative;
+
+        if ($item->isDir()) {
+            if (! is_dir($target)) {
+                mkdir($target, 0755, true);
+            }
+
+            continue;
+        }
+
+        $targetDir = dirname($target);
+        if (! is_dir($targetDir)) {
+            mkdir($targetDir, 0755, true);
+        }
+
+        if (copy($item->getPathname(), $target)) {
+            $copied++;
+        }
+    }
+
+    deploy_delete_directory($tmpDir);
+
+    echo '<pre>[OK] Synced '.$copied.' files from GitHub.</pre>';
+
+    $publicSource = $base.'/cpanel-public-meeting';
+    $publicTarget = dirname($base).'/public_html/meeting';
+
+    if (is_dir($publicSource) && is_dir($publicTarget)) {
+        $publicCopied = 0;
+        foreach (glob($publicSource.'/*') ?: [] as $item) {
+            $name = basename($item);
+            $target = $publicTarget.'/'.$name;
+
+            if (is_dir($item)) {
+                deploy_copy_directory($item, $target);
+                $publicCopied++;
+            } elseif (copy($item, $target)) {
+                $publicCopied++;
+            }
+        }
+
+        echo '<pre>[OK] Updated public_html/meeting/ ('.$publicCopied.' items).</pre>';
+    }
+}
+
+function deploy_copy_directory(string $source, string $target): void
+{
+    if (! is_dir($target)) {
+        mkdir($target, 0755, true);
+    }
+
+    foreach (glob($source.'/*') ?: [] as $item) {
+        $name = basename($item);
+        $dest = $target.'/'.$name;
+
+        if (is_dir($item)) {
+            deploy_copy_directory($item, $dest);
+        } else {
+            copy($item, $dest);
+        }
+    }
+}
+
+function deploy_delete_directory(string $dir): void
+{
+    if (! is_dir($dir)) {
+        return;
+    }
+
+    foreach (glob($dir.'/*') ?: [] as $item) {
+        if (is_dir($item)) {
+            deploy_delete_directory($item);
+        } else {
+            unlink($item);
+        }
+    }
+
+    rmdir($dir);
 }
 
 function deploy_composer_install(): void
