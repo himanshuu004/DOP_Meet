@@ -1,4 +1,9 @@
 <x-guest-layout>
+  <div class="mb-4 text-center">
+    <h1 class="text-lg font-semibold text-gray-800">Staff Login</h1>
+    <p class="text-sm text-gray-500">DOP Meet — Attendance</p>
+  </div>
+
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 

@@ -5,10 +5,10 @@ require __DIR__.'/deploy-scripts/helpers.php';
 deploy_check_secret();
 deploy_output('DOP Meet — Deploy');
 
-deploy_run('git pull origin main');
+deploy_clear_bootstrap_cache();
 
-$composer = file_exists(deploy_base_path().'/composer.phar') ? 'php composer.phar' : 'composer';
-deploy_run($composer.' install --no-dev --optimize-autoloader --no-interaction');
+deploy_git_pull();
+deploy_composer_install();
 
 deploy_run('php artisan migrate --force');
 deploy_run('php artisan config:clear');
@@ -17,5 +17,7 @@ deploy_run('php artisan view:clear');
 deploy_run('php artisan route:clear');
 deploy_run('php artisan config:cache');
 deploy_run('php artisan route:cache');
+
+echo '<pre>[INFO] Deploy complete. If you changed PHP code, upload files to dop_meet/ via FTP before running this script.</pre>';
 
 deploy_finish();

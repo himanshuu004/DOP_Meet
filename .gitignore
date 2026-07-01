@@ -20,6 +20,10 @@
 /storage/*.key
 /storage/pail
 /vendor
+vendor.zip
+deploy-update.zip
+cpanel-meeting-public.zip
+public/Archive.zip
 _ide_helper.php
 Homestead.json
 Homestead.yaml
