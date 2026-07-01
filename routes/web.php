@@ -21,6 +21,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/admin/attendance', [AdminAttendanceController::class, 'index'])->name('admin.attendance.index');
     Route::get('/admin/attendance/export', [AdminAttendanceController::class, 'export'])->name('admin.attendance.export');
+    Route::get('/admin/attendance/{attendance}/edit', [AdminAttendanceController::class, 'edit'])->name('admin.attendance.edit');
+    Route::patch('/admin/attendance/{attendance}', [AdminAttendanceController::class, 'update'])->name('admin.attendance.update');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

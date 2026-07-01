@@ -17,6 +17,12 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+            @if (session('success'))
+                <div class="rounded-md bg-green-50 p-4 text-sm text-green-800">
+                    {{ session('success') }}
+                </div>
+            @endif
+
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
                     <div class="text-sm text-gray-500">Total Entries</div>
@@ -70,6 +76,7 @@
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Designation</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Registered At</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
@@ -81,10 +88,13 @@
                                         <td class="px-4 py-3 text-sm text-gray-900">{{ $attendance->email }}</td>
                                         <td class="px-4 py-3 text-sm text-gray-900">{{ $attendance->displayDesignation() }}</td>
                                         <td class="px-4 py-3 text-sm text-gray-500">{{ $attendance->created_at->format('d M Y, h:i A') }}</td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <a href="{{ route('admin.attendance.edit', $attendance) }}" class="text-indigo-600 hover:text-indigo-900 font-medium">Edit</a>
+                                        </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="px-4 py-8 text-center text-sm text-gray-500">No attendance entries yet.</td>
+                                        <td colspan="7" class="px-4 py-8 text-center text-sm text-gray-500">No attendance entries yet.</td>
                                     </tr>
                                 @endforelse
                             </tbody>

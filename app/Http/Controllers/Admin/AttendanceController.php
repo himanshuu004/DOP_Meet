@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreAttendanceRequest;
 use App\Models\Attendance;
 use App\Services\AttendanceExporter;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -56,5 +58,22 @@ class AttendanceController extends Controller
     public function export(AttendanceExporter $exporter): StreamedResponse
     {
         return $exporter->downloadAll();
+    }
+
+    public function edit(Attendance $attendance): View
+    {
+        return view('attendance.edit', [
+            'attendance' => $attendance,
+            'designations' => config('attendance.designations'),
+        ]);
+    }
+
+    public function update(StoreAttendanceRequest $request, Attendance $attendance): RedirectResponse
+    {
+        $attendance->update($request->validated());
+
+        return redirect()
+            ->route('admin.attendance.index')
+            ->with('success', 'Attendance entry updated successfully.');
     }
 }
